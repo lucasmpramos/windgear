@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Font */
+body {
+  font-family: 'Questrial', system-ui, -apple-system, sans-serif;
+}
+
+/* Range Slider Custom Styles */
+.range-slider {
+  height: 4px !important;
+  background-color: #e5e7eb !important;
+}
+
+.range-slider .range-slider__range {
+  background-color: #2563eb !important;
+  height: 4px !important;
+}
+
+.range-slider .range-slider__thumb {
+  width: 12px !important;
+  height: 12px !important;
+  background-color: #2563eb !important;
+}
+
+/* Hide the default thumb outline */
+.range-slider .range-slider__thumb:focus {
+  outline: none !important;
+}

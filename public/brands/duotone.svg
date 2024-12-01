@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="300" height="80" viewBox="0 0 300 80" xmlns="http://www.w3.org/2000/svg">
+  <g transform="translate(20, 20)">
+    <!-- Left triangular shapes -->
+    <path d="M0 20L20 0V40L0 20Z" fill="#002A3A"/>
+    <path d="M20 0L40 20L20 40V0Z" fill="#002A3A"/>
+    
+    <!-- Text -->
+    <path d="M70 30H250" stroke="none" fill="#002A3A"/>
+    <text x="70" y="30" font-family="Arial" font-weight="700" font-size="32" fill="#002A3A">DUOTONE</text>
+  </g>
+</svg>
