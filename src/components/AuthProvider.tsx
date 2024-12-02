@@ -25,7 +25,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const { setUser } = useStore();
   const syncInProgress = useRef(false);
-  const retryCount = useRef(0);
+  const retryOperation = async <T>(operation: () => Promise<T>, maxRetries = 3): Promise<T> => {
+    let lastError: any;
+    
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        return await operation();
+      } catch (error: any) {
+        lastError = error;
+        
+        // Only retry on rate limit errors
+        if (error.status !== 429) {
+          throw error;
+        }
+        
+        // Exponential backoff
+        const delay = Math.min(1000 * Math.pow(2, attempt), 10000);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+    
+    throw lastError;
+  };
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -86,58 +107,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       syncInProgress.current = true;
+      // Get the authenticated user
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      if (authError) throw authError;
 
-      const syncAttempt = async () => {
-        // Get user metadata from auth
-        const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
-        if (userError) throw userError;
+      // Get profile data
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('avatar_url, full_name, email')
+        .eq('id', authData.user.id)
+        .single();
 
-        // Get avatar URL from OAuth provider if available
-        const avatarUrl = authUser?.user_metadata?.avatar_url || 
-                         authUser?.identities?.[0]?.identity_data?.avatar_url ||
-                         null;
+      if (profileError) throw profileError;
 
-        const fullName = authUser?.user_metadata?.full_name || 
-                        authUser?.identities?.[0]?.identity_data?.full_name ||
-                        null;
-
-        // Update profile with OAuth data if needed
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({
-            avatar_url: avatarUrl,
-            full_name: fullName,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', session.user.id);
-
-        if (updateError) throw updateError;
-
-        // Update auth metadata to match profile
-        const { error: authUpdateError } = await supabase.auth.updateUser({
-          data: {
-            avatar_url: avatarUrl,
-            full_name: fullName
-          }
-        });
-
-        if (authUpdateError) throw authUpdateError;
-
-        // Reset retry count on success
-        retryCount.current = 0;
-      };
-
-      try {
-        await syncAttempt();
-      } catch (error: any) {
-        // Retry on network errors or rate limits
-        if ((error.status === 0 || error.status === 429) && retryCount.current < MAX_RETRIES) {
-          retryCount.current++;
-          await retryWithDelay(syncAttempt);
-        } else {
-          throw error;
+      // Update auth metadata with profile data
+      const { error: updateError } = await supabase.auth.updateUser({
+        data: {
+          avatar_url: profile.avatar_url,
+          full_name: profile.full_name,
+          email: profile.email
         }
+      });
+
+      if (updateError) {
+        throw updateError;
       }
+
+      // Reset retry count on success
+      retryCount.current = 0;
     } catch (error: any) {
       if (error.status === 429) {
         console.warn('Rate limit reached for auth sync, will retry later');
@@ -193,23 +190,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const handleSession = async (session: any) => {
     try {
       if (session?.user) {
-        // Schedule token refresh if we have an expiry time
-        if (session.expires_at) {
-          const expiresAt = new Date(session.expires_at).getTime();
-          scheduleTokenRefresh(expiresAt);
-        }
-
-        // Update last sign in time with error handling
-        try {
-          await updateLastSignIn(session.user.id);
-        } catch (error) {
-          // Silently handle last sign in update failure
-          console.warn('Failed to update last sign in time:', error);
-        }
-        
-        // Sync profile with auth data
-        await debouncedSyncProfile(session);
-        
         const profile = await fetchProfile(session.user.id);
         
         if (profile) {
@@ -220,7 +200,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             avatar_url: profile.avatar_url,
             bio: profile.bio,
             location: profile.location,
-            whatsapp: profile.whatsapp,
+            phone: profile.phone,
             created_at: profile.created_at,
             updated_at: profile.updated_at,
             is_admin: profile.is_admin,
@@ -235,6 +215,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             avatar_url: session.user.user_metadata?.avatar_url,
             created_at: session.user.created_at,
           });
+        }
+
+        // Schedule token refresh if we have an expiry time
+        if (session.expires_at) {
+          const expiresAt = new Date(session.expires_at).getTime();
+          scheduleTokenRefresh(expiresAt);
+        }
+
+        // Update last sign in time with error handling
+        try {
+          await updateLastSignIn(session.user.id);
+        } catch (error) {
+          // Silently handle last sign in update failure
+          console.warn('Failed to update last sign in time:', error);
+        }
+
+        // Update auth metadata from profile data
+        try {
+          if (profile) {
+            await retryOperation(async () => {
+              const { error: updateError } = await supabase.auth.updateUser({
+                data: {
+                  avatar_url: profile.avatar_url,
+                  full_name: profile.full_name,
+                  phone: profile.phone,
+                  provider: 'App'
+                }
+              });
+              
+              if (updateError) throw updateError;
+            });
+          }
+        } catch (error) {
+          console.warn('Failed to sync auth metadata:', error);
+          // Continue execution even if metadata sync fails
         }
       } else {
         setUser(null);
@@ -275,8 +290,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       mounted = false;
       subscription.unsubscribe();
       clearRefreshTimeout();
-      syncInProgress.current = false;
-      retryCount.current = 0;
+      syncInProgress.current = false; 
     };
   }, []);
 

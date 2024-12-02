@@ -35,7 +35,8 @@ function AdminSearchBar({ className = '', onUserUpdate, onProductUpdate }: Admin
 
   const searchProducts = async (searchQuery: string) => {
     try {
-      const products = await getProducts({ search: searchQuery });
+      setLoading(true);
+      const products = await getProducts({ search: searchQuery, adminSearch: true });
       return products.slice(0, 5).map(product => ({
         type: 'product' as const,
         data: product

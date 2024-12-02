@@ -41,9 +41,9 @@ function Admin() {
       try {
         setError(null);
         
-        // Only fetch data for the active tab
+        // Fetch data with adminSearch flag
         if (activeTab === 'listings') {
-          const allProducts = await getProducts();
+          const allProducts = await getProducts({ adminSearch: true });
           if (mounted) {
             setProducts(allProducts);
           }

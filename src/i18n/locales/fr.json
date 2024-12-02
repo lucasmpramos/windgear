@@ -12,6 +12,7 @@
     "delete": "Supprimer",
     "edit": "Modifier",
     "cancel": "Annuler",
+    "confirm": "Confirmer",
     "share": "Partager",
     "contact": "Contact",
     "preview": "Aperçu",
@@ -38,6 +39,7 @@
     "productImages": "Images du produit",
     "basicInfo": "Informations de base",
     "details": "Détails",
+    "saving": "Enregistrement...",
     "title": "Titre",
     "status": "Statut",
     "seller": "Vendeur",
@@ -60,17 +62,31 @@
     }
   },
   "auth": {
+    "welcomeToWindgear": "Bienvenue sur Windgear",
     "signIn": "Se connecter",
+    "signInSuccess": "Connexion réussie !",
     "signInToSave": "Connectez-vous pour sauvegarder des articles",
     "signOut": "Se déconnecter",
     "signUp": "S'inscrire",
+    "signingIn": "Connexion en cours...",
     "createAccount": "Créer un compte",
+    "creatingAccount": "Création du compte...",
     "forgotPassword": "Mot de passe oublié ?",
+    "checkEmailConfirm": "Veuillez vérifier votre email pour confirmer votre compte avant de vous connecter.",
+    "sendResetInstructions": "Envoyer les instructions",
+    "backToSignIn": "Retour à la connexion",
     "email": "Email",
+    "emailPlaceholder": "vous@exemple.com",
     "password": "Mot de passe",
+    "passwordPlaceholder": "••••••••",
+    "passwordRequirement": "Le mot de passe doit contenir au moins 6 caractères",
     "fullName": "Nom complet",
+    "fullNamePlaceholder": "Jean Dupont",
     "location": "Localisation",
-    "orContinueWith": "Ou continuer avec"
+    "locationPlaceholder": "Ville, Pays",
+    "orContinueWith": "Ou continuer avec",
+    "alreadyHaveAccount": "Vous avez déjà un compte ? Connectez-vous",
+    "dontHaveAccount": "Vous n'avez pas de compte ? Inscrivez-vous"
   },
   "navigation": {
     "home": "Accueil",
@@ -84,6 +100,8 @@
     "newListing": "Créer une annonce",
     "editListing": "Modifier l'annonce",
     "addedToSaved": "Ajouté aux favoris",
+    "updateSuccess": "Produit mis à jour avec succès",
+    "updateError": "Échec de la mise à jour du produit",
     "removedFromSaved": "Retiré des favoris",
     "failedToSave": "Échec de la mise à jour des favoris",
     "latestListings": "Dernières annonces",
@@ -105,7 +123,8 @@
     "status": {
       "available": "Disponible",
       "reserved": "Réservé",
-      "sold": "Vendu"
+      "sold": "Vendu",
+      "draft": "Brouillon"
     },
     "categories": {
       "kites": "Ailes",

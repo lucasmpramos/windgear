@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getProduct, deleteProduct } from '../lib/queries';
-import { MessageCircle, Share2, Star, MapPin, Clock, ExternalLink, Loader, Edit, Trash2, Shield, Eye } from 'lucide-react';
+import { Loader, Share2, Star, MapPin, Clock, ExternalLink, Edit, Trash2, Eye, MessageCircle, FileText } from 'lucide-react';
+import ShareDraftButton from '../components/ShareDraftButton';
+import DraftBanner from '../components/DraftBanner';
+import SellerInfo from '../components/SellerInfo';
 import ImageComponent from '../components/ImageComponent';
 import { formatDistanceToNow } from 'date-fns';
 import toast from 'react-hot-toast';
 import { useStore } from '../store/useStore';
 import SaveButton from '../components/SaveButton';
+import ClaimListingButton from '../components/ClaimListingButton';
 import ConditionBadge from '../components/ConditionBadge';
 import StatusBadge from '../components/StatusBadge';
 import { Product } from '../types';
@@ -16,6 +20,7 @@ import AdminBanner from '../shared/components/AdminBanner';
 import PreviewModal from '../components/PreviewModal';
 import PreviewButton from '../shared/components/PreviewButton';
 import BackButton from '../components/BackButton';
+import ConfirmationDialog from '../shared/components/ConfirmationDialog';
 import classNames from 'classnames';
 
 function ProductDetail({ id: propId, previewMode = false }: { id?: string; previewMode?: boolean }) {
@@ -29,6 +34,7 @@ function ProductDetail({ id: propId, previewMode = false }: { id?: string; previ
   const [selectedImage, setSelectedImage] = useState(0);
   const [deleting, setDeleting] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
   const isOwner = user?.id === product?.seller_id;
 
@@ -98,11 +104,13 @@ function ProductDetail({ id: propId, previewMode = false }: { id?: string; previ
     window.open(`https://wa.me/${whatsappNumber.replace(/\D/g, '')}?text=${message}`, '_blank');
   };
 
-  const handleDelete = async () => {
+  const handleDelete = async (confirmed?: boolean) => {
     if (!product || !user || deleting) return;
 
-    const confirmed = window.confirm('Are you sure you want to delete this listing? This action cannot be undone.');
-    if (!confirmed) return;
+    if (!confirmed) {
+      setShowDeleteConfirmation(true);
+      return;
+    }
 
     try {
       setDeleting(true);
@@ -164,23 +172,22 @@ function ProductDetail({ id: propId, previewMode = false }: { id?: string; previ
       <div>
         <div className="mb-4">
           <BackButton />
-          {user?.is_admin && !previewMode && (
-            <div className="mt-4">
-              <AdminBanner />
-            </div>
-          )}
         </div>
 
-        {isOwner && !previewMode && (
-          <div className="hidden md:flex items-center justify-end gap-2 mb-4">
-            <PreviewButton
-              onClick={() => setShowPreviewModal(true)}
-              size="md"
-            />
-          </div>
+        {/* Admin Banner */}
+        {user?.is_admin && !previewMode && (
+          <AdminBanner
+            productId={product.id}
+            onPreview={() => setShowPreviewModal(true)}
+            className="mb-4"
+          />
         )}
 
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            {product.status === 'draft' && !product.seller_id && !user?.is_admin && (
+              <DraftBanner className="m-4" />
+            )}
+
             <div className="grid grid-cols-1 lg:grid-cols-2">
             {/* Image Gallery */}
             <div className="space-y-2 p-2 md:p-4 lg:border-r border-gray-200">
@@ -219,9 +226,11 @@ function ProductDetail({ id: propId, previewMode = false }: { id?: string; previ
               <div>
                 <div className="mb-3 md:mb-4">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-base md:text-xl font-semibold text-blue-600">
-                      {product.brand?.name}
-                    </span>
+                    {product.brand?.name && (
+                      <span className="text-base md:text-xl font-semibold text-blue-600 truncate flex-shrink-0">
+                        {product.brand?.name}
+                      </span>
+                    )}
                     {product.brand?.website && (
                       <a
                         href={product.brand.website}
@@ -271,29 +280,6 @@ function ProductDetail({ id: propId, previewMode = false }: { id?: string; previ
                   <ConditionBadge condition={product.condition} />
                   <StatusBadge status={product.status} />
                 </div>
-                {user?.is_admin && !isOwner && (
-                  <div className="flex items-center gap-2">
-                    <Link
-                      to={`/products/${product.id}/edit`}
-                      className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100"
-                    >
-                      <Edit className="h-4 w-4" />
-                      <span>{t('common.edit')}</span>
-                    </Link>
-                    <button
-                      onClick={handleDelete}
-                      disabled={deleting}
-                      className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100"
-                    >
-                      {deleting ? (
-                        <Loader className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="h-4 w-4" />
-                      )}
-                      <span>{t('common.delete')}</span>
-                    </button>
-                  </div>
-                )}
               </div>
 
               {product.averageRating !== null && (
@@ -331,7 +317,27 @@ function ProductDetail({ id: propId, previewMode = false }: { id?: string; previ
                       <span className="text-sm md:text-base">{t('products.editListing')}</span>
                     </Link>
                     <button
-                      onClick={handleDelete}
+                      onClick={() => handleDelete()}
+                      disabled={deleting}
+                      className="flex-1 bg-red-600 text-white py-2.5 rounded-lg hover:bg-red-700 transition flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      <Trash2 className="h-4 w-4 md:h-5 md:w-5" />
+                      <span className="text-sm md:text-base">
+                        {deleting ? t('common.deleting') : t('common.delete')}
+                      </span>
+                    </button>
+                  </>
+                ) : user?.is_admin && !isOwner ? (
+                  <>
+                    <Link
+                      to={`/products/${product.id}/edit`}
+                      className="flex-1 bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2"
+                    >
+                      <Edit className="h-4 w-4 md:h-5 md:w-5" />
+                      <span className="text-sm md:text-base">{t('products.editListing')}</span>
+                    </Link>
+                    <button
+                      onClick={() => handleDelete()}
                       disabled={deleting}
                       className="flex-1 bg-red-600 text-white py-2.5 rounded-lg hover:bg-red-700 transition flex items-center justify-center gap-2 disabled:opacity-50"
                     >
@@ -364,6 +370,20 @@ function ProductDetail({ id: propId, previewMode = false }: { id?: string; previ
                       <Share2 className="h-4 w-4 md:h-5 md:w-5" />
                     </button>
                   </>
+                )}
+              </div>
+
+              {/* Seller Info or Claim Button */}
+              <div className="mt-6">
+                {product.seller ? (
+                  <SellerInfo seller={product.seller} />
+                ) : product.status === 'draft' ? (
+                  <ClaimListingButton productId={product.id} />
+                ) : (
+                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 flex items-center justify-center gap-2">
+                    <User className="h-5 w-5 text-gray-400" />
+                    <p className="text-sm text-gray-600">No seller assigned</p>
+                  </div>
                 )}
               </div>
 
@@ -412,6 +432,21 @@ function ProductDetail({ id: propId, previewMode = false }: { id?: string; previ
           productId={product.id}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={showDeleteConfirmation}
+        onClose={() => setShowDeleteConfirmation(false)}
+        onConfirm={() => {
+          setShowDeleteConfirmation(false);
+          handleDelete(true);
+        }}
+        title="Delete Listing"
+        message="Are you sure you want to delete this listing? This action cannot be undone."
+        confirmText="Delete"
+        intent="danger"
+        loading={deleting}
+      />
     </>
   );
 }

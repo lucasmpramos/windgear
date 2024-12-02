@@ -1,11 +1,35 @@
 import { supabase } from './supabase';
 import type { Database } from './database.types';
 import toast from 'react-hot-toast';
-import { handleError, AppError, ErrorType, ErrorSeverity } from '../utils/errorHandler';
+import { handleError, AppError, ErrorType, ErrorSeverity } from '../utils/errorHandler'; 
 
 type Product = Database['public']['Tables']['products']['Row'];
 type SavedItem = Database['public']['Tables']['saved_items']['Row'];
 type Category = Database['public']['Tables']['categories']['Row'];
+type Model = Database['public']['Tables']['models']['Row'];
+
+export async function getBrandModels(brandId: string): Promise<Model[]> {
+  return retryOperation(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('models')
+        .select('*')
+        .eq('brand_id', brandId)
+        .order('name');
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      handleError(new AppError('Failed to fetch brand models', {
+        type: ErrorType.DATABASE,
+        severity: ErrorSeverity.HIGH,
+        context: { brandId, error },
+        displayMessage: 'Unable to load models. Please try again.'
+      }));
+      return [];
+    }
+  });
+}
 
 export async function getCategories() {
   return retryOperation(async () => {
@@ -36,6 +60,8 @@ export async function getCategories() {
 interface ProductFilters {
   category?: string;
   condition?: 'new' | 'used';
+  status?: 'active' | 'draft';
+  adminSearch?: boolean;
   minPrice?: number;
   maxPrice?: number;
   search?: string;
@@ -65,7 +91,10 @@ export async function getProducts(filters?: ProductFilters) {
         .select(`
           *,
           seller:profiles(*),
-          brand:brands(*),
+          brand:brands(
+            *,
+            models(*)
+          ),
           reviews(*),
           saved_items(*)
         `);
@@ -87,6 +116,16 @@ export async function getProducts(filters?: ProductFilters) {
       }
       if (filters?.sellerId) {
         query = query.eq('seller_id', filters.sellerId);
+      }
+
+      // Status filtering
+      if (filters?.status === 'draft') {
+        query = query.eq('status', 'draft');
+      } else if (filters?.status === 'active') {
+        query = query.neq('status', 'draft');
+      } else if (!filters?.adminSearch) {
+        // By default, exclude draft products
+        query = query.neq('status', 'draft');
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });
@@ -117,18 +156,21 @@ export async function getProduct(id: string, incrementViews: boolean = true) {
     try {
       // First get the product data
       const { data, error } = await supabase
-        .from('products')
+        .from('products') 
         .select(`
           *,
           seller:profiles(*),
-          brand:brands(*),
+          brand:brands(
+            *,
+            models(*)
+          ),
           reviews(
             *,
             user:profiles(*)
           ),
           saved_items(*)
         `)
-        .eq('id', id)
+        .eq('id', id)  // Allow viewing draft products directly
         .single();
 
       if (error) throw error;
@@ -237,20 +279,27 @@ export async function toggleSavedItem(userId: string, productId: string): Promis
 export async function deleteProduct(productId: string, userId: string) {
   return retryOperation(async () => {
     try {
-      // First check if user is admin
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('is_admin')
-        .eq('id', userId)
-        .single();
+      // If userId is 'admin', skip permission check
+      let isAdmin = false;
+      if (userId !== 'admin') {
+        // Check if user is admin
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('is_admin')
+          .eq('id', userId)
+          .single();
 
-      if (profileError) {
-        throw new AppError('Failed to verify user permissions', {
-          type: ErrorType.AUTH,
-          severity: ErrorSeverity.HIGH,
-          context: { userId, productId },
-          displayMessage: 'Failed to verify permissions. Please try again.'
-        });
+        if (profileError) {
+          throw new AppError('Failed to verify user permissions', {
+            type: ErrorType.AUTH,
+            severity: ErrorSeverity.HIGH,
+            context: { userId, productId },
+            displayMessage: 'Failed to verify permissions. Please try again.'
+          });
+        }
+        isAdmin = profile?.is_admin || false;
+      } else {
+        isAdmin = true;
       }
 
       // First delete all saved_items references
@@ -274,8 +323,8 @@ export async function deleteProduct(productId: string, userId: string) {
         .delete()
         .eq('id', productId);
 
-      // Only add seller_id check if not admin
-      if (!profile?.is_admin) {
+      // Only add seller_id check if not admin 
+      if (!isAdmin) {
         deleteQuery.eq('seller_id', userId);
       }
 

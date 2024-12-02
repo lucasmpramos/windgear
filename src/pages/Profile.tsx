@@ -2,24 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '../store/useStore';
-import classNames from 'classnames';
-import Avatar from '../shared/components/Avatar';
-import { Package, Plus, Pencil, Trash2, Loader, UserCog, Eye, Shield, Bookmark } from 'lucide-react';
+import { Package, Plus, Pencil, Trash2, Loader, UserCog, Eye, Shield, Bookmark, FileText } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getProducts, getSavedItems, deleteProduct } from '../lib/queries';
+import classNames from 'classnames';
+import Avatar from '../shared/components/Avatar';
 import ImageComponent from '../shared/components/ImageComponent';
 import ConditionBadge from '../shared/components/ConditionBadge';
 import StatusBadge from '../shared/components/StatusBadge';
 import SaveButton from '../shared/components/SaveButton';
 import { Product } from '../types';
-import PreviewModal from '../components/PreviewModal';
+type Tab = 'listings' | 'saved' | 'drafts';
 
 function Profile() {
   const { t } = useTranslation();
   const { user } = useStore();
   const [userProducts, setUserProducts] = useState<Product[]>([]);
   const [savedItems, setSavedItems] = useState<Product[]>([]);
-  const [activeTab, setActiveTab] = useState<'listings' | 'saved'>('listings');
+  const [draftProducts, setDraftProducts] = useState<Product[]>([]);
+  const [activeTab, setActiveTab] = useState<Tab>('listings');
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [previewProductId, setPreviewProductId] = useState<string | null>(null);
@@ -28,11 +29,13 @@ function Profile() {
     if (!user) return;
     
     try {
-      const [products, saved] = await Promise.all([
-        getProducts({ sellerId: user.id }),
+      const [products, drafts, saved] = await Promise.all([
+        getProducts({ sellerId: user.id, status: 'active' }),
+        getProducts({ sellerId: user.id, status: 'draft' }),
         getSavedItems(user.id)
       ]);
       setUserProducts(products);
+      setDraftProducts(drafts);
       setSavedItems(saved);
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -167,6 +170,18 @@ function Profile() {
             <Bookmark className="h-4 w-4 md:h-5 md:w-5" />
             <span className="text-sm md:text-base font-medium">{t('products.savedItems')}</span>
           </button>
+          <button
+            onClick={() => setActiveTab('drafts')}
+            className={classNames(
+              'flex items-center gap-2 px-4 py-3 border-b-2 transition-colors',
+              activeTab === 'drafts'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            )}
+          >
+            <FileText className="h-4 w-4 md:h-5 md:w-5" />
+            <span className="text-sm md:text-base font-medium">{t('products.status.draft')}</span>
+          </button>
         </div>
 
         {loading ? (
@@ -186,9 +201,22 @@ function Profile() {
           <div className="text-center py-8">
             <p className="text-gray-600">{t('products.noSavedItems')}</p>
           </div>
+        ) : activeTab === 'drafts' && draftProducts.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-gray-600 mb-4">{t('products.noDrafts')}</p>
+            <Link
+              to="/products/new"
+              className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+            >
+              <Plus className="h-5 w-5" />
+              <span>{t('products.createFirst')}</span>
+            </Link>
+          </div>
         ) : (
           <div className="p-4 space-y-4">
-            {(activeTab === 'listings' ? userProducts : savedItems).map((product) => (
+            {(activeTab === 'listings' ? userProducts : 
+               activeTab === 'saved' ? savedItems : 
+               draftProducts).map((product) => (
               <div key={product.id} className="flex gap-2 md:gap-4 p-2 md:p-4 border rounded-lg hover:bg-gray-50">
                 <Link 
                   to={`/products/${product.id}`}

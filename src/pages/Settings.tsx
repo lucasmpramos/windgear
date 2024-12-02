@@ -16,10 +16,10 @@ function Settings() {
   const [avatar, setAvatar] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [formData, setFormData] = useState({
-    full_name: user?.full_name || '',
-    bio: user?.bio || '',
-    location: user?.location || '',
-    whatsapp: user?.whatsapp || ''
+    full_name: '',
+    bio: '',
+    location: '',
+    phone: ''
   });
 
   // Fetch current profile data
@@ -40,7 +40,7 @@ function Settings() {
           full_name: data.full_name || '',
           bio: data.bio || '',
           location: data.location || '',
-          whatsapp: data.whatsapp || ''
+          phone: data.phone || ''
         });
       } catch (error) {
         console.error('Error fetching profile:', error);
@@ -101,7 +101,7 @@ function Settings() {
           avatar_url: avatarUrl,
           bio: formData.bio,
           location: formData.location,
-          whatsapp: formData.whatsapp,
+          phone: formData.phone,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
@@ -115,7 +115,7 @@ function Settings() {
         avatar_url: avatarUrl,
         bio: formData.bio,
         location: formData.location,
-        whatsapp: formData.whatsapp,
+        phone: formData.phone,
         updated_at: new Date().toISOString()
       });
 
@@ -191,24 +191,24 @@ function Settings() {
             />
           </div>
 
-          {/* WhatsApp */}
+          {/* Phone */}
           <div className="p-4 md:p-6 space-y-4">
-            <label htmlFor="whatsapp" className="block text-sm font-medium text-gray-700">
-              {t('settings.whatsappNumber')}
+            <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+              {t('settings.phoneNumber')}
             </label>
             <div className="mt-1 relative rounded-md shadow-sm">
               <input
                 type="tel"
-                id="whatsapp"
-                name="whatsapp"
-                value={formData.whatsapp}
+                id="phone"
+                name="phone"
+                value={formData.phone}
                 onChange={handleChange}
                 placeholder="+1234567890"
                 className="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
             <p className="mt-1 text-sm text-gray-500">
-              {t('settings.whatsappHelp')}
+              {t('settings.phoneHelp')}
             </p>
           </div>
 

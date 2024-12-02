@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useStore } from '../store/useStore';
-import { getCategories } from '../lib/queries';
+import { getCategories, getBrandModels } from '../lib/queries';
 import { Loader } from 'lucide-react';
 import { uploadProductImages } from '../lib/storage';
 import toast from 'react-hot-toast';
@@ -23,12 +23,13 @@ function CreateProduct() {
   const [loading, setLoading] = useState(false);
   const [brands, setBrands] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [models, setModels] = useState([]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [selectedSeller, setSelectedSeller] = useState<User | null>(user);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    status: 'available' as 'available' | 'sold' | 'reserved',
+    status: 'available' as 'available' | 'sold' | 'reserved' | 'draft',
     price: '',
     condition: '',
     category: '',
@@ -65,6 +66,26 @@ function CreateProduct() {
     fetchCategories();
   }, [fetchBrands, fetchCategories]);
 
+  // Fetch models when brand changes
+  useEffect(() => {
+    async function fetchModels() {
+      if (!formData.brand_id) {
+        setModels([]);
+        return;
+      }
+
+      try {
+        const data = await getBrandModels(formData.brand_id);
+        setModels(data);
+      } catch (err) {
+        console.error('Error fetching models:', err);
+        toast.error('Failed to load models');
+      }
+    }
+
+    fetchModels();
+  }, [formData.brand_id]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -80,6 +101,9 @@ function CreateProduct() {
       // Upload images first
       const imageUrls = await uploadProductImages(user.id, selectedFiles);
 
+      // Set status to draft if no seller is selected in admin mode
+      const status = user?.is_admin && !selectedSeller ? 'draft' : formData.status;
+
       // Create product
       const { data: product, error } = await supabase
         .from('products')
@@ -94,8 +118,8 @@ function CreateProduct() {
           model: formData.model || null,
           year: formData.year ? parseInt(formData.year) : null,
           images: imageUrls,
-          seller_id: user?.is_admin ? selectedSeller?.id || user.id : user?.id,
-          status: 'available'
+          seller_id: user?.is_admin ? selectedSeller?.id || null : user.id,
+          status
         })
         .select()
         .single();
@@ -140,6 +164,7 @@ function CreateProduct() {
             <UserSelect
               selectedUser={selectedSeller}
               onUserSelect={setSelectedSeller}
+              optional={user?.is_admin}
               className="p-4 md:p-6"
             />
             
@@ -152,10 +177,11 @@ function CreateProduct() {
                   options={[
                     { id: 'available', name: t('products.status.available') },
                     { id: 'reserved', name: t('products.status.reserved') },
-                    { id: 'sold', name: t('products.status.sold') }
+                    { id: 'sold', name: t('products.status.sold') },
+                    { id: 'draft', name: t('products.status.draft') }
                   ]}
                   value={formData.status}
-                  onChange={(value) => setFormData(prev => ({ ...prev, status: value as 'available' | 'sold' | 'reserved' }))}
+                  onChange={(value) => setFormData(prev => ({ ...prev, status: value as 'available' | 'sold' | 'reserved' | 'draft' }))}
                   className="flex-1"
                 />
               </div>
@@ -211,14 +237,22 @@ function CreateProduct() {
                   <label htmlFor="model" className="block text-sm font-medium text-gray-700">
                     {t('common.model')}
                   </label>
-                  <input
-                    type="text"
-                    id="model"
-                    name="model"
-                    value={formData.model}
-                    onChange={handleChange}
-                    placeholder={t('common.placeholders.model')}
-                    className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  <Combobox
+                    options={models}
+                    selectedIds={models.find(m => m.name === formData.model)?.id ? [models.find(m => m.name === formData.model)!.id] : []}
+                    onChange={(ids) => {
+                      const selectedModel = models.find(m => m.id === ids[0]);
+                      if (selectedModel) {
+                        setFormData(prev => ({
+                          ...prev,
+                          model: selectedModel.name
+                        }));
+                      }
+                    }}
+                    placeholder={t('common.selectModel')}
+                    className="mt-1"
+                    multiple={false}
+                    disabled={!formData.brand_id}
                   />
                 </div>
                 <div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getProduct, getCategories } from '../lib/queries';
+import { getProduct, getCategories, getBrandModels } from '../lib/queries';
 import { Loader } from 'lucide-react';
 import { updateProductImages } from '../lib/storage';
 import toast from 'react-hot-toast';
@@ -25,11 +25,13 @@ function EditProduct() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [brands, setBrands] = useState([]);
+  const [models, setModels] = useState<Model[]>([]);
   const [categories, setCategories] = useState([]);
   const [currentImages, setCurrentImages] = useState<string[]>([]);
   const [removedImages, setRemovedImages] = useState<string[]>([]);
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [selectedSeller, setSelectedSeller] = useState<User | null>(user);
+  const [initialLoad, setInitialLoad] = useState(true);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -68,7 +70,7 @@ function EditProduct() {
   // Fetch product data
   useEffect(() => {
     async function fetchProduct() {
-      if (!id) return;
+      if (!id || !initialLoad) return;
       
       try {
         setLoading(true);
@@ -95,6 +97,7 @@ function EditProduct() {
           year: data.year?.toString() || '',
           status: data.status
         });
+        setInitialLoad(false);
       } catch (err) {
         console.error('Error fetching product:', err);
         toast.error('Failed to load product details');
@@ -107,7 +110,40 @@ function EditProduct() {
     fetchProduct();
     fetchBrands();
     fetchCategories();
-  }, [id, user, navigate, fetchBrands, fetchCategories]);
+  }, [id, user, navigate, fetchBrands, fetchCategories, initialLoad]);
+
+  // Fetch models when brand changes
+  useEffect(() => {
+    async function fetchModels() {
+      if (!formData.brand_id || !user) {
+        setModels([]);
+        return;
+        if (!formData.brand_id || !user || !initialLoad) return;
+      }
+
+      try {
+        const data = await getBrandModels(formData.brand_id);
+        
+        // If we have a current model name, find and select its ID
+        if (formData.model) {
+          const existingModel = data.find(m => m.name === formData.model);
+          if (existingModel) {
+            setFormData(prev => ({
+              ...prev,
+              model: existingModel.name
+            }));
+          }
+        }
+        
+        setModels(data);
+      } catch (err) {
+        console.error('Error fetching models:', err);
+        toast.error('Failed to load models');
+      }
+    }
+
+    fetchModels();
+  }, [formData.brand_id, user?.id, initialLoad]);
 
   const handleImagesChange = (images: (File | string)[]) => {
     const newCurrentImages = images.filter((img): img is string => typeof img === 'string');
@@ -142,6 +178,9 @@ function EditProduct() {
         removedImages
       );
 
+      // Set status to draft if no seller is selected in admin mode
+      const status = user?.is_admin && !selectedSeller ? 'draft' : formData.status;
+
       // Update product data
       const updateQuery = supabase
         .from('products')
@@ -155,9 +194,9 @@ function EditProduct() {
           brand_id: formData.brand_id || null,
           model: formData.model || null,
           year: formData.year ? parseInt(formData.year) : null,
-          seller_id: selectedSeller?.id || user.id,
+          seller_id: user?.is_admin ? selectedSeller?.id || null : user.id,
           images: updatedImageUrls,
-          status: formData.status,
+          status,
           updated_at: new Date().toISOString()
         })
         .eq('id', id);
@@ -219,6 +258,7 @@ function EditProduct() {
               <UserSelect
                 selectedUser={selectedSeller}
                 onUserSelect={setSelectedSeller}
+                optional={user?.is_admin}
                 className="mb-6"
               />
 
@@ -229,10 +269,11 @@ function EditProduct() {
                   options={[
                     { id: 'available', name: t('products.status.available') },
                     { id: 'reserved', name: t('products.status.reserved') },
-                    { id: 'sold', name: t('products.status.sold') }
+                    { id: 'sold', name: t('products.status.sold') },
+                    { id: 'draft', name: t('products.status.draft') }
                   ]}
                   value={formData.status}
-                  onChange={(value) => setFormData(prev => ({ ...prev, status: value as 'available' | 'sold' | 'reserved' }))}
+                  onChange={(value) => setFormData(prev => ({ ...prev, status: value as 'available' | 'sold' | 'reserved' | 'draft' }))}
                   className="flex-1"
                 />
               </div>
@@ -288,14 +329,22 @@ function EditProduct() {
                   <label htmlFor="model" className="block text-sm font-medium text-gray-700">
                     {t('common.model')}
                   </label>
-                  <input
-                    type="text"
-                    id="model"
-                    name="model"
-                    value={formData.model}
-                    onChange={handleChange}
-                    placeholder={t('common.placeholders.model')}
-                    className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  <Combobox
+                    options={models}
+                    selectedIds={models.find(m => m.name === formData.model)?.id ? [models.find(m => m.name === formData.model)!.id] : []}
+                    onChange={(ids) => {
+                      const selectedModel = models.find(m => m.id === ids[0]);
+                      if (selectedModel) {
+                        setFormData(prev => ({
+                          ...prev,
+                          model: selectedModel.name
+                        }));
+                      }
+                    }}
+                    placeholder={t('common.selectModel')}
+                    className="mt-1"
+                    multiple={false}
+                    disabled={!formData.brand_id}
                   />
                 </div>
                 <div>

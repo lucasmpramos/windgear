@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { Mail, Lock, User, MapPin, Loader, AlertCircle, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 function Auth() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [mode, setMode] = useState<'signin' | 'signup' | 'forgot'>('signin');
   const [loading, setLoading] = useState(false);
@@ -99,7 +101,7 @@ function Auth() {
 
       if (error) throw error;
 
-      toast.success('Password reset instructions sent to your email', {
+      toast.success(t('auth.checkEmailConfirm'), {
         duration: 6000
       });
       setMode('signin');
@@ -160,7 +162,7 @@ function Auth() {
 
           if (updateError) throw updateError;
 
-          toast.success('Please check your email to confirm your account before signing in.', {
+          toast.success(t('auth.checkEmailConfirm'), {
             duration: 6000
           });
           setMode('signin');
@@ -173,7 +175,7 @@ function Auth() {
 
         if (signInError) throw signInError;
         
-        toast.success('Signed in successfully!');
+        toast.success(t('auth.signInSuccess'));
         navigate('/');
       }
     } catch (error: any) {
@@ -189,8 +191,8 @@ function Auth() {
       return (
         <form onSubmit={handleForgotPassword} className="space-y-4">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1"> 
+              {t('auth.email')}
             </label>
             <div className="relative">
               <Mail className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
@@ -199,7 +201,7 @@ function Auth() {
                 id="email"
                 name="email"
                 required
-                placeholder="you@example.com"
+                placeholder={t('auth.emailPlaceholder')}
                 value={formData.email}
                 onChange={handleChange}
                 className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -218,7 +220,7 @@ function Auth() {
                 Sending Instructions...
               </span>
             ) : (
-              'Send Reset Instructions'
+              t('auth.sendResetInstructions')
             )}
           </button>
 
@@ -228,7 +230,7 @@ function Auth() {
             className="w-full flex items-center justify-center gap-2 text-sm text-gray-600 hover:text-gray-900"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to Sign In
+            {t('auth.backToSignIn')}
           </button>
         </form>
       );
@@ -239,8 +241,8 @@ function Auth() {
         {mode === 'signup' && (
           <>
             <div>
-              <label htmlFor="full_name" className="block text-sm font-medium text-gray-700 mb-1">
-                Full Name
+              <label htmlFor="full_name" className="block text-sm font-medium text-gray-700 mb-1"> 
+                {t('auth.fullName')}
               </label>
               <div className="relative">
                 <User className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
@@ -249,7 +251,7 @@ function Auth() {
                   id="full_name"
                   name="full_name"
                   required
-                  placeholder="John Doe"
+                  placeholder={t('auth.fullNamePlaceholder')}
                   value={formData.full_name}
                   onChange={handleChange}
                   className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -258,8 +260,8 @@ function Auth() {
             </div>
 
             <div>
-              <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
-                Location
+              <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1"> 
+                {t('auth.location')}
               </label>
               <div className="relative">
                 <MapPin className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
@@ -268,7 +270,7 @@ function Auth() {
                   id="location"
                   name="location"
                   required
-                  placeholder="City, Country"
+                  placeholder={t('auth.locationPlaceholder')}
                   value={formData.location}
                   onChange={handleChange}
                   className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -279,8 +281,8 @@ function Auth() {
         )}
 
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-            Email
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1"> 
+            {t('auth.email')}
           </label>
           <div className="relative">
             <Mail className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
@@ -289,7 +291,7 @@ function Auth() {
               id="email"
               name="email"
               required
-              placeholder="you@example.com"
+              placeholder={t('auth.emailPlaceholder')}
               value={formData.email}
               onChange={handleChange}
               className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -298,8 +300,8 @@ function Auth() {
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-            Password
+          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1"> 
+            {t('auth.password')}
           </label>
           <div className="relative">
             <Lock className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
@@ -308,7 +310,7 @@ function Auth() {
               id="password"
               name="password"
               required
-              placeholder="••••••••"
+              placeholder={t('auth.passwordPlaceholder')}
               value={formData.password}
               onChange={handleChange}
               minLength={6}
@@ -317,7 +319,7 @@ function Auth() {
           </div>
           {mode === 'signup' && (
             <p className="mt-1 text-sm text-gray-500">
-              Password must be at least 6 characters long
+              {t('auth.passwordRequirement')}
             </p>
           )}
         </div>
@@ -332,7 +334,7 @@ function Auth() {
               }}
               className="text-sm text-blue-600 hover:text-blue-800"
             >
-              Forgot password?
+              {t('auth.forgotPassword')}
             </button>
           </div>
         )}
@@ -345,10 +347,10 @@ function Auth() {
           {loading ? (
             <span className="flex items-center justify-center gap-2">
               <Loader className="h-5 w-5 animate-spin" />
-              {mode === 'signup' ? 'Creating Account...' : 'Signing In...'}
+              {mode === 'signup' ? t('auth.creatingAccount') : t('auth.signingIn')}
             </span>
           ) : (
-            <span>{mode === 'signup' ? 'Create Account' : 'Sign In'}</span>
+            <span>{mode === 'signup' ? t('auth.createAccount') : t('auth.signIn')}</span>
           )}
         </button>
 
@@ -367,7 +369,7 @@ function Auth() {
             }}
             className="text-sm text-blue-600 hover:text-blue-800"
           >
-            {mode === 'signup' ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+            {mode === 'signup' ? t('auth.alreadyHaveAccount') : t('auth.dontHaveAccount')}
           </button>
         </div>
 
@@ -376,7 +378,7 @@ function Auth() {
             <div className="w-full border-t border-gray-300" />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">Or continue with</span>
+            <span className="px-2 bg-white text-gray-500">{t('auth.orContinueWith')}</span>
           </div>
         </div>
 

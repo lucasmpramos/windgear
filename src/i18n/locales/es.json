@@ -12,6 +12,7 @@
     "delete": "Eliminar",
     "edit": "Editar",
     "cancel": "Cancelar",
+    "confirm": "Confirmar",
     "share": "Compartir",
     "contact": "Contacto",
     "preview": "Vista Previa",
@@ -38,6 +39,7 @@
     "productImages": "Imágenes del Producto",
     "basicInfo": "Información Básica",
     "details": "Detalles",
+    "saving": "Guardando...",
     "title": "Título",
     "status": "Estado",
     "seller": "Vendedor",
@@ -60,17 +62,31 @@
     }
   },
   "auth": {
+    "welcomeToWindgear": "Bienvenido a Windgear",
     "signIn": "Iniciar Sesión",
+    "signInSuccess": "¡Sesión iniciada con éxito!",
     "signInToSave": "Inicia sesión para guardar artículos",
     "signOut": "Cerrar Sesión",
     "signUp": "Registrarse",
+    "signingIn": "Iniciando sesión...",
     "createAccount": "Crear Cuenta",
+    "creatingAccount": "Creando cuenta...",
     "forgotPassword": "¿Olvidaste tu contraseña?",
+    "checkEmailConfirm": "Por favor, revisa tu correo para confirmar tu cuenta antes de iniciar sesión.",
+    "sendResetInstructions": "Enviar Instrucciones",
+    "backToSignIn": "Volver a Iniciar Sesión",
     "email": "Correo",
+    "emailPlaceholder": "tu@ejemplo.com",
     "password": "Contraseña",
+    "passwordPlaceholder": "••••••••",
+    "passwordRequirement": "La contraseña debe tener al menos 6 caracteres",
     "fullName": "Nombre Completo",
+    "fullNamePlaceholder": "Juan Pérez",
     "location": "Ubicación",
-    "orContinueWith": "O continuar con"
+    "locationPlaceholder": "Ciudad, País",
+    "orContinueWith": "O continuar con",
+    "alreadyHaveAccount": "¿Ya tienes una cuenta? Inicia sesión",
+    "dontHaveAccount": "¿No tienes una cuenta? Regístrate"
   },
   "navigation": {
     "home": "Inicio",
@@ -84,6 +100,8 @@
     "newListing": "Crear Anuncio",
     "editListing": "Editar Anuncio",
     "addedToSaved": "Agregado a guardados",
+    "updateSuccess": "Producto actualizado con éxito",
+    "updateError": "Error al actualizar el producto",
     "removedFromSaved": "Eliminado de guardados",
     "failedToSave": "Error al actualizar guardados",
     "latestListings": "Últimos Anuncios",
@@ -105,7 +123,8 @@
     "status": {
       "available": "Disponible",
       "reserved": "Reservado",
-      "sold": "Vendido"
+      "sold": "Vendido",
+      "draft": "Borrador"
     },
     "categories": {
       "kites": "Kites",

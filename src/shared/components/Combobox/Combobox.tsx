@@ -18,6 +18,7 @@ interface ComboboxProps {
   label?: string;
   className?: string;
   multiple?: boolean;
+  disabled?: boolean;
   displayValue?: (selectedOptions: Option[]) => string;
 }
 
@@ -29,6 +30,7 @@ function Combobox({
   label,
   className = '',
   multiple = false,
+  disabled = false,
   displayValue
 }: ComboboxProps) {
   const { t } = useTranslation();
@@ -85,14 +87,19 @@ function Combobox({
       <HeadlessCombobox
         value={multiple ? selectedOptions : selectedOptions[0] || null}
         onChange={handleSelect}
+        disabled={disabled}
         multiple={multiple}
       >
         <div className="relative">
           <div className="relative w-full">
             <HeadlessCombobox.Input
-              className="w-full rounded-lg border border-gray-300 px-10 py-2 text-base focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className={classNames(
+                "w-full rounded-lg border border-gray-300 px-10 py-2 text-base focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500",
+                disabled && "bg-gray-50 text-gray-500 cursor-not-allowed"
+              )}
               placeholder={placeholder}
               onChange={(event) => setQuery(event.target.value)}
+              disabled={disabled}
               displayValue={(selected: Option | Option[]) => {
                 if (!selected) return '';
                 if (Array.isArray(selected)) {

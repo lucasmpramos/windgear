@@ -12,6 +12,7 @@
     "delete": "Excluir",
     "edit": "Editar",
     "cancel": "Cancelar",
+    "confirm": "Confirmar",
     "share": "Compartilhar",
     "contact": "Contato",
     "preview": "Visualizar",
@@ -38,7 +39,11 @@
     "productImages": "Imagens do Produto",
     "basicInfo": "Informações Básicas",
     "details": "Detalhes",
-    "title": "Title",
+    "selectModel": "Selecionar modelo",
+    "selectCondition": "Selecionar condição",
+    "creating": "Criando...",
+    "saving": "Salvando...",
+    "title": "Título",
     "status": "Status",
     "seller": "Vendedor",
     "previewMode": "Modo de visualização: É assim que seu anúncio aparece para os compradores",
@@ -48,7 +53,6 @@
     "selectBrands": "Selecione as marcas",
     "selectBrand": "Selecione a marca",
     "selectCategory": "Selecione a categoria",
-    "selectCondition": "Selecione a condição",
     "creating": "Criando...",
     "placeholders": {
       "title": "ex: Core XR7 12m Kite 2023",
@@ -60,17 +64,31 @@
     }
   },
   "auth": {
+    "welcomeToWindgear": "Bem-vindo ao Windgear",
     "signIn": "Entrar",
+    "signInSuccess": "Login realizado com sucesso!",
     "signInToSave": "Por favor, faça login para salvar itens",
     "signOut": "Sair",
     "signUp": "Cadastrar",
+    "signingIn": "Entrando...",
     "createAccount": "Criar Conta",
+    "creatingAccount": "Criando conta...",
     "forgotPassword": "Esqueceu a senha?",
+    "checkEmailConfirm": "Por favor, verifique seu email para confirmar sua conta antes de fazer login.",
+    "sendResetInstructions": "Enviar Instruções",
+    "backToSignIn": "Voltar ao Login",
     "email": "Email",
+    "emailPlaceholder": "voce@exemplo.com",
     "password": "Senha",
+    "passwordPlaceholder": "••••••••",
+    "passwordRequirement": "A senha deve ter pelo menos 6 caracteres",
     "fullName": "Nome Completo",
+    "fullNamePlaceholder": "João Silva",
     "location": "Localização",
-    "orContinueWith": "Ou continue com"
+    "locationPlaceholder": "Cidade, País",
+    "orContinueWith": "Ou continue com",
+    "alreadyHaveAccount": "Já tem uma conta? Entre",
+    "dontHaveAccount": "Não tem uma conta? Cadastre-se"
   },
   "navigation": {
     "home": "Início",
@@ -84,6 +102,8 @@
     "newListing": "Criar Anúncio",
     "editListing": "Editar Anúncio",
     "addedToSaved": "Adicionado aos itens salvos",
+    "updateSuccess": "Produto atualizado com sucesso",
+    "updateError": "Falha ao atualizar produto",
     "removedFromSaved": "Removido dos itens salvos",
     "failedToSave": "Falha ao atualizar itens salvos",
     "latestListings": "Últimos Anúncios",
@@ -105,7 +125,8 @@
     "status": {
       "available": "Disponível",
       "reserved": "Reservado",
-      "sold": "Vendido"
+      "sold": "Vendido",
+      "draft": "Rascunho"
     },
     "categories": {
       "kites": "Kites",
