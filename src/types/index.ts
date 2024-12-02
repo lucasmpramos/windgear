@@ -5,7 +5,7 @@ export interface User {
   avatar_url?: string;
   bio?: string;
   location?: string;
-  whatsapp?: string;
+  phone?: string;
   created_at: string;
   updated_at?: string;
   is_admin?: boolean;
@@ -33,7 +33,7 @@ export interface Product {
   images: string[];
   seller_id: string;
   location: string;
-  status: 'available' | 'sold' | 'reserved';
+  status: 'available' | 'sold' | 'reserved' | 'draft';
   brand_id?: string;
   brand?: Brand;
   model?: string;

@@ -10,10 +10,12 @@ import { useStore } from '../../../store/useStore';
 interface UserSelectProps {
   selectedUser: User | null;
   onUserSelect: (user: User | null) => void;
+  optional?: boolean;
+  onCancel?: () => void;
   className?: string;
 }
 
-function UserSelect({ selectedUser, onUserSelect, className = '' }: UserSelectProps) {
+function UserSelect({ selectedUser, onUserSelect, optional = false, onCancel, className = '' }: UserSelectProps) {
   const { t } = useTranslation();
   const { user: currentUser } = useStore();
   const [userSearch, setUserSearch] = useState('');
@@ -21,7 +23,7 @@ function UserSelect({ selectedUser, onUserSelect, className = '' }: UserSelectPr
   const [searchResults, setSearchResults] = useState<User[]>([]);
 
   // Only render for admin users
-  if (!currentUser?.is_admin) {
+  if (!currentUser?.is_admin && !optional) {
     return null;
   }
 
@@ -67,7 +69,7 @@ function UserSelect({ selectedUser, onUserSelect, className = '' }: UserSelectPr
   return (
     <div className={className}>
       <label className="block text-sm font-medium text-gray-700 mb-2">
-        {t('common.seller')}
+        {t('common.seller')} {!optional && '*'}
       </label>
       {selectedUser ? (
         <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -134,6 +136,15 @@ function UserSelect({ selectedUser, onUserSelect, className = '' }: UserSelectPr
             </div>
           )}
         </div>
+      )}
+      {onCancel && (
+        <button
+          type="button"
+          onClick={onCancel}
+          className="mt-2 w-full text-sm text-gray-600 hover:text-gray-900"
+        >
+          Cancel
+        </button>
       )}
     </div>
   );

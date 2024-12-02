@@ -12,6 +12,7 @@ import Footer from './components/Footer';
 const Home = lazy(() => import('./pages/Home'));
 const Login = lazy(() => import('./pages/Login'));
 const ProductListPage = lazy(() => import('./pages/ProductList'));
+const PublicProfile = lazy(() => import('./pages/PublicProfile'));
 const ProductDetail = lazy(() => import('./pages/ProductDetail'));
 const EditProduct = lazy(() => import('./pages/EditProduct'));
 const CreateProduct = lazy(() => import('./pages/CreateProduct'));
@@ -56,6 +57,7 @@ function App() {
                   <Route path="/login" element={<Login />} />
                   <Route path="/auth/callback" element={<AuthCallback />} />
                   <Route path="/products" element={<ProductListPage />} />
+                  <Route path="/users/:id" element={<PublicProfile />} />
                   <Route path="/products/:id" element={<ProductDetail />} />
                   <Route path="/privacy" element={<Privacy />} />
                   <Route path="/terms" element={<Terms />} />
