@@ -10,7 +10,11 @@
     "preview": "vite preview",
     "seed": "tsx src/scripts/seed-products.ts",
     "sync-users": "tsx -r dotenv/config src/scripts/sync-users-metadata.ts",
-    "seed:categories": "tsx -r dotenv/config src/scripts/seed-categories.ts"
+    "seed:categories": "tsx -r dotenv/config src/scripts/seed-categories.ts",
+    "seed:duotone": "tsx -r dotenv/config src/scripts/seed-duotone-models.ts",
+    "seed:core": "tsx -r dotenv/config src/scripts/seed-core-models.ts",
+    "seed:cabrinha": "tsx -r dotenv/config src/scripts/seed-cabrinha-models.ts",
+    "seed:north": "tsx -r dotenv/config src/scripts/seed-north-models.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.7",
